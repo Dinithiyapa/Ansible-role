@@ -71,7 +71,7 @@ jobs:
 
       # Step 2: Set up Ansible
       - name: Set up Ansible
-        uses: williamtenny/ansible-action@v1
+        uses: ansible/ansible-setup-action@v1
         with:
           version: 'latest'
 
