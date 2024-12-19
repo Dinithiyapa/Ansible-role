@@ -88,7 +88,7 @@ jobs:
             docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
             # Run the containers (adjust ports as needed)
-            docker run -d -p 80:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
+            docker run -d -p 8081:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
             # Optionally, run other commands (database migrations, etc.)
@@ -122,7 +122,7 @@ jobs:
             docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
             # Run the containers (adjust ports as needed)
-            docker run -d -p 80:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
+            docker run -d -p 8081:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
             # Optionally, run other commands (database migrations, etc.)
