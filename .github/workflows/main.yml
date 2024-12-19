@@ -9,54 +9,46 @@ jobs:
   build-web:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Check out the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 3: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 4: Build and Push the Web Image
       - name: Build and push web image
         uses: docker/build-push-action@v4
         with:
           context: ./web  # Path to the web app's Dockerfile
           push: true
-          tags: yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}  # Use run number and attempt number for tagging
+          tags: yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
 
   build-api:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Check out the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 3: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 4: Build and Push the API Image
       - name: Build and push API image
         uses: docker/build-push-action@v4
         with:
           context: ./api  # Path to the API's Dockerfile
           push: true
-          tags: yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}  # Use run number and attempt number for tagging
+          tags: yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
   deploy-ansible:
     name: Deploy with Ansible
@@ -65,19 +57,34 @@ jobs:
       - build-api
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Execute remote SSH commands using password (Appleboy SSH Action)
-      - name: Execute remote SSH commands
+      - name: Execute remote SSH commands using password (Appleboy SSH Action)
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}  # Add Linode server IP as a secret
-          username: ${{ secrets.USERNAME }}  # Add Linode username as a secret
-          password: ${{ secrets.PASSWORD }}  # Add your Linode password as a secret
-          port: ${{ secrets.PORT }}  # Usually port 22 for SSH, adjust if different
+          host: ${{ secrets.HOST }}  # Linode server IP or EC2 IP
+          username: ${{ secrets.USERNAME }}  # SSH username
+          password: ${{ secrets.PASSWORD }}  # SSH password
+          port: ${{ secrets.PORT }}  # Typically 22 for SSH
           script: |
-            # Navigate to your deployment directory and run your deployment script
-            cd /path/to/your/deployment/directory
-            bash update.sh  # Run your update or deployment script
+            # Install Docker if it's not already installed
+            if ! command -v docker &> /dev/null
+            then
+                echo "Docker could not be found, installing Docker..."
+                sudo apt-get update
+                sudo apt-get install -y docker.io
+                sudo systemctl start docker
+                sudo systemctl enable docker
+            fi
+
+            # Pull the latest images
+            docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
+            docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
+
+            # Run the containers (adjust ports and volumes as needed)
+            docker run -d -p 80:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
+            docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
+
+            # Optionally, run other commands like database migrations or application-specific tasks
+            # bash update.sh
