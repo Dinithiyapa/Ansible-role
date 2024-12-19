@@ -71,7 +71,7 @@ jobs:
 
       # Step 2: Set up Ansible
       - name: Set up Ansible
-        uses: ansible/ansible-setup-action@v1
+        uses: dawidd6/action-ansible-playbook@v2
         with:
           version: 'latest'
 
