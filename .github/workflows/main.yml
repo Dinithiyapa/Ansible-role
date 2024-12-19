@@ -1,44 +1,34 @@
-name: Build, Push Docker Images, and Deploy with Ansible
+name: Docker Build and Deploy to Linode
 
 on:
   push:
     branches:
-      - '**'  # Trigger the workflow on pushes to any branch
+      - main
 
 jobs:
   build-web:
+    name: Build Web Docker Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and push web image
+      - name: Build and push Web image
         uses: docker/build-push-action@v4
         with:
-          context: ./web  # Path to the web app's Dockerfile
+          context: ./web  # Path to the Web's Dockerfile
           push: true
           tags: yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
 
   build-api:
+    name: Build API Docker Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -57,18 +47,17 @@ jobs:
       - build-api
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Execute remote SSH commands for Host 1
+      # Deploy to Host 1
       - name: Execute remote SSH commands on Host 1
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}  # Existing Linode host IP
-          username: ${{ secrets.USERNAME }}  # Existing Linode username
-          password: ${{ secrets.PASSWORD }}  # Existing Linode password
-          port: ${{ secrets.PORT }}  # Existing Linode port
+          host: ${{ secrets.HOST }}  # IP of the Linode host
+          username: ${{ secrets.USERNAME }}  # Username for SSH access
+          password: ${{ secrets.PASSWORD }}  # Password for SSH access
+          port: ${{ secrets.PORT }}  # SSH port
           script: |
             # Install Docker if not present
             if ! command -v docker &> /dev/null; then
@@ -87,44 +76,10 @@ jobs:
             docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
-            # Run the containers (adjust ports as needed)
+            # Run the containers
             docker run -d -p 8081:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
-            # Optionally, run other commands (database migrations, etc.)
-            cd /path/to/your/deployment/directory
-            bash update.sh  # Run the update script
-
-      # Step 3: Execute remote SSH commands for Host 2
-      - name: Execute remote SSH commands on Host 2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_2 }}  # New Linode host IP
-          username: ${{ secrets.USERNAME_2 }}  # New Linode username
-          password: ${{ secrets.PASSWORD_2 }}  # New Linode password
-          port: ${{ secrets.PORT_2 }}  # New Linode port
-          script: |
-            # Install Docker if not present
-            if ! command -v docker &> /dev/null; then
-              echo "Docker could not be found, installing Docker..."
-              sudo apt-get update
-              sudo apt-get install -y docker.io
-              sudo systemctl start docker
-              sudo systemctl enable docker
-            fi
-
-            # Stop and remove existing containers if they exist
-            docker ps -a -q -f name=web-container | xargs -r docker rm -f
-            docker ps -a -q -f name=api-container | xargs -r docker rm -f
-
-            # Pull the latest Docker images
-            docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
-            docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
-
-            # Run the containers (adjust ports as needed)
-            docker run -d -p 8081:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
-            docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
-
-            # Optionally, run other commands (database migrations, etc.)
+            # Optionally, run other commands
             cd /path/to/your/deployment/directory
             bash update.sh  # Run the update script
