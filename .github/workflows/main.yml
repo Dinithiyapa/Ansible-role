@@ -79,6 +79,10 @@ jobs:
               sudo systemctl enable docker
             fi
 
+            # Stop and remove existing containers if they exist
+            docker ps -a -q -f name=web-container | xargs -r docker rm -f
+            docker ps -a -q -f name=api-container | xargs -r docker rm -f
+
             # Pull the latest Docker images
             docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
@@ -108,6 +112,10 @@ jobs:
               sudo systemctl start docker
               sudo systemctl enable docker
             fi
+
+            # Stop and remove existing containers if they exist
+            docker ps -a -q -f name=web-container | xargs -r docker rm -f
+            docker ps -a -q -f name=api-container | xargs -r docker rm -f
 
             # Pull the latest Docker images
             docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
