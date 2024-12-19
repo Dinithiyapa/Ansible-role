@@ -33,4 +33,3 @@
         restart_policy: always
         ports:
           - "8080:8080"  # Expose port 8080 if required
-
