@@ -57,34 +57,66 @@ jobs:
       - build-api
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Execute remote SSH commands using password (Appleboy SSH Action)
+      # Step 2: Execute remote SSH commands for Host 1
+      - name: Execute remote SSH commands on Host 1
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}  # Linode server IP or EC2 IP
-          username: ${{ secrets.USERNAME }}  # SSH username
-          password: ${{ secrets.PASSWORD }}  # SSH password
-          port: ${{ secrets.PORT }}  # Typically 22 for SSH
+          host: ${{ secrets.HOST }}  # Existing Linode host IP
+          username: ${{ secrets.USERNAME }}  # Existing Linode username
+          password: ${{ secrets.PASSWORD }}  # Existing Linode password
+          port: ${{ secrets.PORT }}  # Existing Linode port
           script: |
-            # Install Docker if it's not already installed
-            if ! command -v docker &> /dev/null
-            then
-                echo "Docker could not be found, installing Docker..."
-                sudo apt-get update
-                sudo apt-get install -y docker.io
-                sudo systemctl start docker
-                sudo systemctl enable docker
+            # Install Docker if not present
+            if ! command -v docker &> /dev/null; then
+              echo "Docker could not be found, installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
             fi
 
-            # Pull the latest images
+            # Pull the latest Docker images
             docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
-            # Run the containers (adjust ports and volumes as needed)
+            # Run the containers (adjust ports as needed)
             docker run -d -p 80:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
             docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
 
-            # Optionally, run other commands like database migrations or application-specific tasks
-            # bash update.sh
+            # Optionally, run other commands (database migrations, etc.)
+            cd /path/to/your/deployment/directory
+            bash update.sh  # Run the update script
+
+      # Step 3: Execute remote SSH commands for Host 2
+      - name: Execute remote SSH commands on Host 2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_2 }}  # New Linode host IP
+          username: ${{ secrets.USERNAME_2 }}  # New Linode username
+          password: ${{ secrets.PASSWORD_2 }}  # New Linode password
+          port: ${{ secrets.PORT_2 }}  # New Linode port
+          script: |
+            # Install Docker if not present
+            if ! command -v docker &> /dev/null; then
+              echo "Docker could not be found, installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            fi
+
+            # Pull the latest Docker images
+            docker pull yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
+            docker pull yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
+
+            # Run the containers (adjust ports as needed)
+            docker run -d -p 80:80 --name web-container yapadinithi/buzbud-web-action:${{ github.run_number }}-${{ github.run_attempt }}
+            docker run -d -p 8080:8080 --name api-container yapadinithi/buzbud-api-action:${{ github.run_number }}-${{ github.run_attempt }}
+
+            # Optionally, run other commands (database migrations, etc.)
+            cd /path/to/your/deployment/directory
+            bash update.sh  # Run the update script
