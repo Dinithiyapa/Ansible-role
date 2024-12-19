@@ -1,6 +1,6 @@
 ---
-- name: Install Docker and Deploy Web and API
-  hosts: all
-  become: true
+- name: Deploy Web and API Docker Containers
+  hosts: remote_servers  # Target all hosts in the remote_servers group
+  become: yes  # Use sudo for Docker commands
   roles:
-    - deploy
+    - deploy  # Reference the role that contains the tasks
