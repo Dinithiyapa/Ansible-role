@@ -73,12 +73,14 @@ jobs:
       - name: Set up Ansible
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          version: 'latest'
+          playbook: playbook.yml  # Path to your playbook
+          inventory: inventory/hosts  # Path to your inventory file
 
-      # Step 3: Deploy with Ansible
+      # Step 3: Run Ansible Playbook
       - name: Run Ansible Playbook
         env:
-          ANSIBLE_HOST_KEY_CHECKING: 'False'
+          ANSIBLE_HOST_KEY_CHECKING: 'False'  # Disables host key checking for SSH
+          WEB_IMAGE_TAG: ${{ github.run_number }}-${{ github.run_attempt }}  # Dynamic tag for web image
+          API_IMAGE_TAG: ${{ github.run_number }}-${{ github.run_attempt }}  # Dynamic tag for API image
         run: |
-          ansible-playbook -i inventory/hosts deploy.yml
-        # Ensure your playbook is properly set up for deployment
+          ansible-playbook -i inventory/hosts playbook.yml  # Run your playbook with inventory
